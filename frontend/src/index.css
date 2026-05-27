@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-vinyl-cream text-vinyl-black;
+  }
+}
+
+@layer components {
+  /* Botón primario estilo WaxVault */
+  .btn-primary {
+    @apply bg-vinyl-label text-vinyl-black font-semibold px-4 py-2 rounded-lg
+           hover:brightness-110 transition-all duration-200 focus:outline-none
+           focus:ring-2 focus:ring-vinyl-label focus:ring-offset-2;
+  }
+
+  /* Botón secundario */
+  .btn-secondary {
+    @apply bg-transparent border-2 border-vinyl-black text-vinyl-black font-semibold
+           px-4 py-2 rounded-lg hover:bg-vinyl-black hover:text-vinyl-cream
+           transition-all duration-200 focus:outline-none
+           focus:ring-2 focus:ring-vinyl-black focus:ring-offset-2;
+  }
+
+  /* Tarjeta base */
+  .card {
+    @apply bg-white rounded-xl shadow-vinyl p-6;
+  }
+
+  /* Etiqueta de condición de vinilo */
+  .condition-badge {
+    @apply inline-block px-2 py-0.5 text-xs font-bold rounded
+           bg-vinyl-groove text-vinyl-cream;
+  }
+}

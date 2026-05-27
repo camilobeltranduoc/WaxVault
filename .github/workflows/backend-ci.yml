@@ -1,0 +1,104 @@
+name: Backend CI/CD — Azure Functions (Python)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    name: Test Python y Deploy a Azure Functions
+
+    steps:
+      # -----------------------------------------------------------------------
+      # Checkout
+      # -----------------------------------------------------------------------
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # Setup Python 3.12 con cache de pip
+      # -----------------------------------------------------------------------
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+
+      # -----------------------------------------------------------------------
+      # Instalar dependencias
+      # -----------------------------------------------------------------------
+      - name: Instalar dependencias
+        working-directory: backend
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx
+
+      # -----------------------------------------------------------------------
+      # Linting con ruff (más rápido que flake8/pylint)
+      # TODO: Descomentar cuando se instale ruff en requirements.txt
+      # -----------------------------------------------------------------------
+      # - name: Lint con ruff
+      #   working-directory: backend
+      #   run: ruff check .
+
+      # -----------------------------------------------------------------------
+      # Tests
+      # TODO: Agregar tests reales en backend/tests/
+      # -----------------------------------------------------------------------
+      - name: Ejecutar tests
+        working-directory: backend
+        run: |
+          # Crear directorio de tests si no existe
+          mkdir -p tests
+          # Smoke test: importar function_app.py sin errores
+          python -c "
+          import sys
+          sys.path.insert(0, '.')
+          # Verificar imports críticos
+          from config.settings import Settings
+          from models.vinyl import Vinyl, VinylCondition, VinylStatus
+          from models.user import User, UserRole
+          from models.collection import CollectionEntry
+          print('✓ Todos los imports del backend son correctos')
+          "
+
+      # -----------------------------------------------------------------------
+      # Deploy a Azure Functions
+      # Solo en push a main (no en PRs)
+      # Requiere el secret AZURE_FUNCTIONAPP_PUBLISH_PROFILE en el repo
+      # -----------------------------------------------------------------------
+      - name: Deploy a Azure Functions
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ secrets.AZURE_FUNCTION_APP_NAME }}
+          package: backend
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+          # Instalar dependencias del requirements.txt en Azure durante el deploy
+          scm-do-build-during-deployment: true
+          enable-oryx-build: true
+
+      # -----------------------------------------------------------------------
+      # Smoke test post-deploy (verificar que el health check responde)
+      # -----------------------------------------------------------------------
+      - name: Smoke test — Health Check
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          FUNCTION_URL="https://${{ secrets.AZURE_FUNCTION_APP_NAME }}.azurewebsites.net/api/health"
+          echo "Verificando: $FUNCTION_URL"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$FUNCTION_URL")
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Health check falló: HTTP $STATUS"
+            exit 1
+          fi
+          echo "✓ Health check OK: HTTP $STATUS"

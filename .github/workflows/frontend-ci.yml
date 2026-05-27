@@ -1,0 +1,89 @@
+name: Frontend CI/CD — Azure Static Web Apps
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    name: Build React App y Deploy a Azure SWA
+
+    steps:
+      # -----------------------------------------------------------------------
+      # Checkout
+      # -----------------------------------------------------------------------
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # Setup Node.js con cache de npm
+      # -----------------------------------------------------------------------
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # -----------------------------------------------------------------------
+      # Instalar dependencias (npm ci usa package-lock.json → build reproducible)
+      # -----------------------------------------------------------------------
+      - name: Instalar dependencias
+        working-directory: frontend
+        run: npm ci
+
+      # -----------------------------------------------------------------------
+      # Lint (fallar si hay errores ESLint)
+      # -----------------------------------------------------------------------
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      # -----------------------------------------------------------------------
+      # Build (inyecta variables de entorno desde GitHub Secrets)
+      # -----------------------------------------------------------------------
+      - name: Build producción
+        working-directory: frontend
+        run: npm run build
+        env:
+          VITE_B2C_TENANT: ${{ secrets.VITE_B2C_TENANT }}
+          VITE_B2C_TENANT_ID: ${{ secrets.VITE_B2C_TENANT_ID }}
+          VITE_B2C_CLIENT_ID: ${{ secrets.VITE_B2C_CLIENT_ID }}
+          VITE_B2C_POLICY: ${{ secrets.VITE_B2C_POLICY }}
+          VITE_B2C_API_SCOPE: ${{ secrets.VITE_B2C_API_SCOPE }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_REDIRECT_URI: ${{ secrets.VITE_REDIRECT_URI }}
+
+      # -----------------------------------------------------------------------
+      # Deploy a Azure Static Web Apps
+      # Requiere el secret AZURE_STATIC_WEB_APPS_API_TOKEN en el repo
+      # -----------------------------------------------------------------------
+      - name: Deploy a Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: 'upload'
+          app_location: 'frontend'
+          output_location: 'dist'
+          skip_app_build: true      # Ya buildamos en el paso anterior
+
+  # Cerrar PR deployment environments automáticamente
+  close-pull-request:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Cerrar PR Environment
+    steps:
+      - name: Close PR Staging Environment
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: 'close'

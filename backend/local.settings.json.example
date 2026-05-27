@@ -1,0 +1,25 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+
+    "COSMOS_DB_ENDPOINT": "https://<your-account>.documents.azure.com:443/",
+    "COSMOS_DB_KEY": "<your-cosmos-primary-key>",
+    "COSMOS_DB_DATABASE": "waxvault",
+
+    "BLOB_STORAGE_CONNECTION_STRING": "DefaultEndpointsProtocol=https;AccountName=<name>;AccountKey=<key>;EndpointSuffix=core.windows.net",
+    "BLOB_CONTAINER_COVERS": "vinyl-covers",
+
+    "B2C_TENANT": "<your-tenant>.b2clogin.com",
+    "B2C_CLIENT_ID": "<backend-app-registration-client-id>",
+    "B2C_POLICY": "B2C_1_signupsignin",
+    "B2C_JWKS_URI": "https://<your-tenant>.b2clogin.com/<your-tenant>.onmicrosoft.com/B2C_1_signupsignin/discovery/v2.0/keys",
+
+    "DISCOGS_API_TOKEN": "<your-personal-access-token>",
+    "DISCOGS_BASE_URL": "https://api.discogs.com",
+
+    "ENVIRONMENT": "development",
+    "ALLOWED_ORIGINS": "http://localhost:5173,http://localhost:4280"
+  }
+}

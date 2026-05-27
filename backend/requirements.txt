@@ -1,0 +1,40 @@
+# ============================================================
+# Azure Functions Python Worker
+# ============================================================
+azure-functions==1.21.3
+
+# ============================================================
+# Web Framework
+# ============================================================
+fastapi==0.115.5
+uvicorn[standard]==0.32.1        # Solo para desarrollo local fuera de func
+
+# ============================================================
+# Azure SDKs
+# ============================================================
+azure-cosmos==4.9.0              # Cosmos DB NoSQL (async client)
+azure-storage-blob==12.24.0      # Blob Storage para portadas
+azure-identity==1.19.0           # DefaultAzureCredential (producción)
+
+# ============================================================
+# Autenticación / JWT
+# ============================================================
+python-jose[cryptography]==3.3.0 # Validación JWT RS256 contra B2C JWKS
+
+# ============================================================
+# HTTP Client (Discogs API)
+# ============================================================
+httpx==0.27.2                    # Async HTTP client
+
+# ============================================================
+# Validación y Configuración
+# ============================================================
+pydantic==2.10.3
+pydantic-settings==2.7.0
+python-multipart==0.0.17         # Soporte multipart/form-data (subida de portadas)
+
+# ============================================================
+# Utilidades
+# ============================================================
+python-dotenv==1.0.1
+requests==2.32.3
