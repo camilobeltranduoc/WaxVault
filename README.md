@@ -1,4 +1,4 @@
-# 🎵 WaxVault
+# WaxVault
 
 **Cloud-native vinyl record collection management platform.**
 
