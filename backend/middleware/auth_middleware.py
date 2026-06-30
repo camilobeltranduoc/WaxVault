@@ -15,10 +15,11 @@ Uso en endpoints:
         ...
 """
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 
+from config.settings import get_settings
 from services.auth_service import (
     extract_email,
     extract_roles,
@@ -27,7 +28,7 @@ from services.auth_service import (
 )
 
 # HTTPBearer extrae automáticamente el token del header "Authorization: Bearer <token>"
-bearer_scheme = HTTPBearer(auto_error=True)
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
 class CurrentUser:
@@ -64,18 +65,35 @@ class CurrentUser:
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    x_dev_auth: str = Header(default=None, alias="X-Dev-Auth"),
 ) -> CurrentUser:
     """
     FastAPI dependency — valida el JWT de B2C y retorna el CurrentUser.
 
+    En development, acepta el header X-Dev-Auth con formato "role:email:user_id"
+    para evitar la dependencia de Azure AD B2C en pruebas locales.
+
     Raises:
         HTTPException(401): Si el token es inválido, expirado o no provisto.
     """
+    settings = get_settings()
+
+    # Bypass de desarrollo — solo cuando ENVIRONMENT=development
+    if settings.environment == "development" and x_dev_auth:
+        parts = x_dev_auth.split(":", 2)
+        if len(parts) == 3:
+            role, email, user_id = parts
+            return CurrentUser(user_id=user_id, email=email, roles=[role], claims={})
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="No se pudo validar las credenciales. Token inválido o expirado.",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    if not credentials:
+        raise credentials_exception
+
     try:
         claims = await validate_token(credentials.credentials)
         user_id = extract_user_id(claims)

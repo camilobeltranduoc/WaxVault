@@ -1,8 +1,3 @@
-/**
- * Tabla de la colección personal del usuario.
- * TODO: Implementar con datos reales del hook useCollection().
- */
-
 import { formatCurrency, formatCondition, formatDate, formatProfitLoss } from '@utils/formatters'
 
 export default function CollectionTable({ entries = [], onEdit, onDelete }) {
@@ -24,10 +19,9 @@ export default function CollectionTable({ entries = [], onEdit, onDelete }) {
         <thead className="bg-vinyl-black text-vinyl-cream">
           <tr>
             <th className="px-4 py-3 text-left font-semibold">Vinilo</th>
-            <th className="px-4 py-3 text-left font-semibold">Artista</th>
             <th className="px-4 py-3 text-center font-semibold">Condición</th>
             <th className="px-4 py-3 text-right font-semibold">Compra</th>
-            <th className="px-4 py-3 text-right font-semibold">Mercado</th>
+            <th className="px-4 py-3 text-right font-semibold">Valor aprox.</th>
             <th className="px-4 py-3 text-right font-semibold">G/P</th>
             <th className="px-4 py-3 text-center font-semibold">Agregado</th>
             <th className="px-4 py-3 text-center font-semibold">Acciones</th>
@@ -36,28 +30,66 @@ export default function CollectionTable({ entries = [], onEdit, onDelete }) {
         <tbody className="divide-y divide-gray-100">
           {entries.map((entry) => {
             const { formatted, isGain } = formatProfitLoss(
-              entry.vinyl?.discogs_market_price,
+              entry.discogs_market_price,
               entry.purchase_price
             )
+            const coverUrl = entry.cover_override_url || entry.cover_image_url
+
             return (
               <tr key={entry.id} className="hover:bg-vinyl-cream transition-colors">
-                <td className="px-4 py-3 font-medium">{entry.vinyl?.title || '—'}</td>
-                <td className="px-4 py-3 text-gray-600">{entry.vinyl?.artist || '—'}</td>
+                {/* Carátula + título + artista */}
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-vinyl-groove shadow-sm">
+                      {coverUrl ? (
+                        <img
+                          src={coverUrl}
+                          alt={entry.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.currentTarget.src = '/placeholder-vinyl.svg' }}
+                        />
+                      ) : (
+                        <img
+                          src="/placeholder-vinyl.svg"
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-vinyl-black truncate max-w-[180px]">
+                        {entry.title || '—'}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate max-w-[180px]">
+                        {entry.artist || '—'}
+                      </p>
+                      {entry.year && (
+                        <p className="text-xs text-gray-400">{entry.year}</p>
+                      )}
+                    </div>
+                  </div>
+                </td>
+
                 <td className="px-4 py-3 text-center">
                   <span className="condition-badge">{formatCondition(entry.condition)}</span>
                 </td>
+
                 <td className="px-4 py-3 text-right text-gray-600">
                   {formatCurrency(entry.purchase_price)}
                 </td>
+
                 <td className="px-4 py-3 text-right font-semibold text-vinyl-label">
-                  {formatCurrency(entry.vinyl?.discogs_market_price)}
+                  {formatCurrency(entry.discogs_market_price)}
                 </td>
+
                 <td className={`px-4 py-3 text-right font-semibold ${isGain ? 'text-green-600' : 'text-red-600'}`}>
                   {formatted}
                 </td>
+
                 <td className="px-4 py-3 text-center text-gray-400 text-xs">
                   {formatDate(entry.created_at)}
                 </td>
+
                 <td className="px-4 py-3 text-center">
                   <div className="flex justify-center gap-2">
                     <button

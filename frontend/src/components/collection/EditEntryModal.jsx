@@ -75,8 +75,8 @@ export default function EditEntryModal({ entry, onClose }) {
         </div>
 
         <p className="text-sm text-gray-500 mb-4">
-          <span className="font-medium text-vinyl-black">{entry.vinyl?.title || 'Vinilo'}</span>
-          {entry.vinyl?.artist && <span> — {entry.vinyl.artist}</span>}
+          <span className="font-medium text-vinyl-black">{entry.title || 'Vinilo'}</span>
+          {entry.artist && <span> — {entry.artist}</span>}
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

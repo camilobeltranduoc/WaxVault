@@ -110,6 +110,7 @@ class VinylUpdate(BaseModel):
 class VinylPublic(BaseModel):
     """Vista pública de un vinilo (Módulo A). Excluye campos internos."""
     id: str
+    discogs_id: Optional[int] = None
     title: str
     artist: str
     label: Optional[str] = None
@@ -120,3 +121,4 @@ class VinylPublic(BaseModel):
     format: Optional[str] = None
     cover_image_url: Optional[str] = None
     discogs_market_price: Optional[float] = None
+    discogs_num_for_sale: Optional[int] = None

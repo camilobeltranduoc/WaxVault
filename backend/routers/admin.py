@@ -211,7 +211,7 @@ async def create_vinyl(vinyl: VinylCreate, admin: CurrentUser = Depends(require_
     )
     saved = await cosmos_service.upsert_item(
         cosmos_service.CONTAINER_VINYLS,
-        new_vinyl.model_dump(),
+        new_vinyl.model_dump(mode="json"),
     )
     return saved
 

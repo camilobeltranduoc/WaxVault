@@ -36,21 +36,22 @@ export const addVinylSchema = z.object({
     .optional(),
 })
 
-/** Schema para agregar un vinilo existente a la colección personal */
+/** Schema para agregar un vinilo de Discogs a la colección personal */
 export const collectionEntrySchema = z.object({
-  vinyl_id: z.string().min(1, 'El vinilo es requerido'),
+  discogs_id: z.number().int().positive('Se requiere un Discogs ID válido'),
   condition: z.enum(['M', 'NM', 'VG+', 'VG', 'G+', 'G', 'F', 'P'], {
     errorMap: () => ({ message: 'Condición inválida' }),
   }),
   purchase_price: z
     .number()
     .min(0, 'El precio no puede ser negativo')
-    .optional(),
-  purchase_date: z.string().datetime().optional(),
+    .optional()
+    .nullable(),
   notes: z
     .string()
     .max(1000, 'Las notas no pueden exceder 1000 caracteres')
-    .optional(),
+    .optional()
+    .nullable(),
 })
 
 /** Schema para actualizar el perfil/rol de un usuario (Admin) */

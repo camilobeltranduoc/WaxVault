@@ -78,7 +78,7 @@ export const msalConfig = {
 // ---------------------------------------------------------------------------
 export const loginRequest = {
   scopes: [
-    `https://${import.meta.env.VITE_B2C_TENANT_ID}/${import.meta.env.VITE_B2C_API_SCOPE || 'waxvault-api'}/access_as_user`,
+    import.meta.env.VITE_B2C_API_SCOPE || 'openid',
   ],
 }
 

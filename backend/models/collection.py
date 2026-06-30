@@ -1,8 +1,8 @@
 """
 Modelos Pydantic para entradas de la colección personal de un usuario.
 
-Cada CollectionEntry vincula a un usuario con un vinilo del catálogo maestro,
-almacenando datos específicos de esa copia (condición, precio de compra, notas).
+Cada CollectionEntry representa un vinilo que el usuario posee, con metadata
+embebida de Discogs (título, artista, portada) para evitar joins costosos.
 
 Diseño de Cosmos DB:
   - Container: "collection"
@@ -26,9 +26,21 @@ class CollectionEntry(BaseModel):
         ...,
         description="Partition key — b2c_object_id del propietario de la colección."
     )
-    vinyl_id: str = Field(
+    discogs_id: int = Field(
         ...,
-        description="ID del vinilo en el catálogo maestro (container 'vinyls')."
+        description="ID del release en Discogs. Identificador universal del vinilo."
+    )
+    title: str = Field(..., description="Título del disco (embebido desde Discogs al agregar).")
+    artist: str = Field(..., description="Artista (embebido desde Discogs al agregar).")
+    label: Optional[str] = Field(default=None)
+    year: Optional[int] = Field(default=None)
+    cover_image_url: Optional[str] = Field(
+        default=None,
+        description="URL de portada de Discogs (embebida al agregar)."
+    )
+    discogs_market_price: Optional[float] = Field(
+        default=None,
+        description="Precio mínimo de mercado en Discogs (USD) al momento de agregar."
     )
     condition: VinylCondition = Field(
         default=VinylCondition.VERY_GOOD,
@@ -65,8 +77,8 @@ class CollectionEntry(BaseModel):
 
 
 class CollectionEntryCreate(BaseModel):
-    """Payload para agregar un vinilo a la colección (POST /api/collection)."""
-    vinyl_id: str
+    """Payload para agregar un vinilo de Discogs a la colección (POST /api/collection)."""
+    discogs_id: int = Field(..., description="ID del release en Discogs.")
     condition: VinylCondition = VinylCondition.VERY_GOOD
     purchase_price: Optional[float] = Field(default=None, ge=0)
     purchase_date: Optional[datetime] = None
@@ -85,12 +97,9 @@ class CollectionEntryUpdate(BaseModel):
 
 
 class CollectionSummary(BaseModel):
-    """
-    Resumen patrimonial de la colección de un usuario.
-    Usado en el Dashboard (Módulo B).
-    """
+    """Resumen patrimonial de la colección de un usuario. Usado en el Dashboard."""
     total_items: int
-    total_market_value: float   # Suma de discogs_market_price de todos los vinilos
-    total_purchase_cost: float  # Suma de purchase_price
-    unrealized_gain: float      # total_market_value - total_purchase_cost
-    condition_breakdown: dict[str, int]  # {"NM": 5, "VG+": 10, ...}
+    total_market_value: float
+    total_purchase_cost: float
+    unrealized_gain: float
+    condition_breakdown: dict[str, int]

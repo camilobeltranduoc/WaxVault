@@ -18,6 +18,7 @@ export default function VinylCard({ vinyl }) {
           alt={`${vinyl.artist} — ${vinyl.title}`}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
+          onError={(e) => { e.currentTarget.src = '/placeholder-vinyl.svg' }}
         />
       </div>
 
@@ -31,9 +32,13 @@ export default function VinylCard({ vinyl }) {
           {vinyl.label && `${vinyl.label} · `}
           {formatYear(vinyl.year)}
         </p>
-        <p className="text-sm font-bold text-vinyl-label mt-2">
-          {formatCurrency(vinyl.discogs_market_price)}
-        </p>
+        {vinyl.discogs_market_price != null ? (
+          <p className="text-sm font-bold text-vinyl-label mt-2">
+            {formatCurrency(vinyl.discogs_market_price)}
+          </p>
+        ) : (
+          <p className="text-xs text-gray-400 mt-2">Ver precio →</p>
+        )}
       </div>
     </Link>
   )
