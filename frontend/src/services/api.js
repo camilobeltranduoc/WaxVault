@@ -51,15 +51,10 @@ api.interceptors.request.use(async (config) => {
     ])
     config.headers.Authorization = `Bearer ${tokenResponse.accessToken}`
   } catch (error) {
-    if (error instanceof InteractionRequiredAuthError && !isRedirecting) {
-      // Consent requerido — redirigir una sola vez
-      console.warn('[API] Consent required, redirecting to B2C login')
-      isRedirecting = true
-      msalInstance.acquireTokenRedirect(loginRequest)
-    } else {
-      // Error de red, timeout u otro — continuar sin token (API retornará 401)
-      console.warn('[API] Token acquisition failed, continuing without token:', error.message)
-    }
+    // Si el token falla (cache miss, consent requerido, timeout), continuar sin token.
+    // Los endpoints públicos (catálogo) responden 200 sin auth.
+    // Los endpoints protegidos (colección) responden 401, que la respuesta intercepta abajo.
+    console.warn('[API] Token acquisition failed, continuing without token:', error.message)
   }
 
   return config
