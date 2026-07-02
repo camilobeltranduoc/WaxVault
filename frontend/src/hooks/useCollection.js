@@ -22,7 +22,7 @@ export function useCollection() {
   const collectionQuery = useQuery({
     queryKey: [QUERY_KEYS.COLLECTION],
     queryFn: async () => {
-      const response = await api.get('/collection')
+      const response = await api.get('/collection/')
       return response.data
     },
   })
@@ -42,7 +42,7 @@ export function useCollection() {
   // CREATE — Agregar vinilo a la colección
   // -------------------------------------------------------------------------
   const addEntry = useMutation({
-    mutationFn: (newEntry) => api.post('/collection', newEntry),
+    mutationFn: (newEntry) => api.post('/collection/', newEntry),
     onSuccess: () => {
       // Invalida el cache para refetch automático de la lista
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.COLLECTION] })
