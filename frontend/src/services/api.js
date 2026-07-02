@@ -67,11 +67,15 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401 && !isRedirecting) {
-      console.error('[API] 401 Unauthorized — redirecting to login')
-      isRedirecting = true
-      msalInstance.acquireTokenRedirect(loginRequest)
+      const accounts = msalInstance.getAllAccounts()
+      if (accounts.length === 0) {
+        // Sin sesión: redirigir a login una vez
+        isRedirecting = true
+        msalInstance.acquireTokenRedirect(loginRequest)
+      }
+      // Si hay cuenta pero el backend rechaza el token, el scope/audience está
+      // mal configurado. Redirigir de nuevo no ayuda — propagar el error.
     }
-    // Para otros errores (404, 422, 500), dejar que el caller los maneje
     return Promise.reject(error)
   },
 )
