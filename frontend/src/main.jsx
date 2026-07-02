@@ -28,29 +28,43 @@ import './index.css'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,    // 5 min → no refetch si los datos son recientes
-      retry: 1,                      // 1 reintento en caso de error de red
-      refetchOnWindowFocus: false,   // No refetch al cambiar de pestaña (UX menos agresiva)
+      staleTime: 1000 * 60 * 5,
+      retry: 1,
+      refetchOnWindowFocus: false,
     },
     mutations: {
-      retry: 0,                      // No reintentar mutations automáticamente
+      retry: 0,
     },
   },
 })
 
 // ---------------------------------------------------------------------------
-// Render
+// Render — pre-inicializar MSAL antes de montar React.
+// Esto es obligatorio para MSAL Browser v3: evita que MsalProvider quede
+// atascado en inProgress='startup' si initialize() falla silenciosamente.
+// Con la instancia ya inicializada, MsalProvider solo llama handleRedirectPromise()
+// y el estado pasa de 'startup' a 'none' en milisegundos.
 // ---------------------------------------------------------------------------
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <MsalProvider instance={msalInstance}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-        {/* DevTools solo se incluye en desarrollo (Vite lo tree-shakes en prod) */}
-        <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
-      </QueryClientProvider>
-    </MsalProvider>
-  </React.StrictMode>,
-)
+async function bootstrap() {
+  try {
+    await msalInstance.initialize()
+  } catch {
+    // Si B2C no está disponible al cargar, continuar igual para que
+    // el usuario vea la UI (el catálogo público no requiere auth)
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      <MsalProvider instance={msalInstance}>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+          <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
+        </QueryClientProvider>
+      </MsalProvider>
+    </React.StrictMode>,
+  )
+}
+
+bootstrap()

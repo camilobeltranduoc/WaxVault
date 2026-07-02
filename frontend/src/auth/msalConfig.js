@@ -78,8 +78,10 @@ export const msalConfig = {
 // ---------------------------------------------------------------------------
 export const loginRequest = {
   scopes: [
-    import.meta.env.VITE_B2C_API_SCOPE || 'openid',
-  ],
+    'openid',
+    'offline_access',
+    import.meta.env.VITE_B2C_API_SCOPE,
+  ].filter(Boolean),
 }
 
 // ---------------------------------------------------------------------------
