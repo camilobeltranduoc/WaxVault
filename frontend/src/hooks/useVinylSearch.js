@@ -18,7 +18,7 @@ export function useVinylSearch(searchTerm = '', page = 1, perPage = 20) {
   return useQuery({
     queryKey: [QUERY_KEYS.CATALOG_SEARCH, searchTerm, page, perPage],
     queryFn: async () => {
-      const response = await api.get('/catalog', {
+      const response = await api.get('/catalog/', {
         params: { q: searchTerm, page, per_page: perPage },
       })
       return response.data

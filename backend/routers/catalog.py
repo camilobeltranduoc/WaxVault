@@ -35,6 +35,7 @@ def _clean_artist_name(name: str) -> str:
     return re.sub(r'\s*\(\d+\)$', '', name).strip()
 
 
+@router.get("", include_in_schema=False)
 @router.get(
     "/",
     summary="Buscar álbumes en Discogs",

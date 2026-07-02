@@ -87,6 +87,7 @@ async def get_dashboard(current_user: CurrentUser = Depends(get_current_user)):
     }
 
 
+@router.get("", include_in_schema=False)
 @router.get(
     "/",
     summary="Listar mi colección",
