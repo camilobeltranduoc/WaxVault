@@ -2,12 +2,12 @@ name: Frontend CI/CD — Azure Static Web Apps
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-ci.yml'
   pull_request:
-    branches: [main]
+    branches: [main, master]
     paths:
       - 'frontend/**'
 
