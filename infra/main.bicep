@@ -28,6 +28,9 @@ param location string = resourceGroup().location
 @description('Prefijo del proyecto para nombres de recursos')
 param projectName string = 'waxvault'
 
+@description('Object ID del usuario desplegador (az ad signed-in-user show --query id -o tsv)')
+param deployerObjectId string = ''
+
 // ---------------------------------------------------------------------------
 // Nombres de recursos (prefijo-ambiente-servicio)
 // ---------------------------------------------------------------------------
@@ -62,6 +65,17 @@ module functionApp 'modules/functionapp.bicep' = {
     appName: '${resourcePrefix}-api'
     location: location
     storageAccountName: storage.outputs.accountName
+    keyVaultName: '${resourcePrefix}-kv'
+  }
+}
+
+module keyVault 'modules/keyvault.bicep' = {
+  name: 'keyvault-deployment'
+  params: {
+    vaultName: take(replace('${resourcePrefix}-kv', '-', ''), 24)  // KV names: max 24 chars, no trailing hyphens
+    location: location
+    functionAppIdentityObjectId: functionApp.outputs.principalId
+    deployerObjectId: deployerObjectId
   }
 }
 
@@ -80,3 +94,5 @@ output functionAppUrl string = 'https://${functionApp.outputs.defaultHostName}'
 output staticWebAppUrl string = 'https://${staticWebApp.outputs.defaultHostName}'
 output cosmosEndpoint string = cosmosDb.outputs.endpoint
 output storageAccountName string = storage.outputs.accountName
+output keyVaultUri string = keyVault.outputs.vaultUri
+output functionAppIdentityId string = functionApp.outputs.principalId

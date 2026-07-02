@@ -35,14 +35,10 @@ resource staticWebApp 'Microsoft.Web/staticSites@2023-12-01' = {
     tier: 'Free'
   }
   properties: {
-    repositoryUrl: repositoryUrl
-    branch: branch
+    // Deploy del contenido via GitHub Actions (sin integración directa al crear)
     buildProperties: {
-      appLocation: 'frontend'        // Carpeta del proyecto React
-      outputLocation: 'dist'         // Output de `npm run build`
-      apiLocation: ''                // API manejada por Azure Functions, no SWA built-in
+      skipGithubActionWorkflowGeneration: true
     }
-    // stagingEnvironmentPolicy: 'Enabled'  // Descomentar para preview deployments en PRs
   }
 }
 
