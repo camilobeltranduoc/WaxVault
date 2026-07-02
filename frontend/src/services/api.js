@@ -12,6 +12,7 @@
  */
 
 import axios from 'axios'
+import { InteractionRequiredAuthError } from '@azure/msal-browser'
 import { msalInstance, loginRequest } from '@auth/msalConfig'
 
 const api = axios.create({
@@ -19,8 +20,11 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000,  // 15 segundos — Azure Functions puede tener cold start
+  timeout: 20000,  // 20 segundos — Azure Functions puede tener cold start
 })
+
+// Guard para evitar loops de redirect si múltiples requests fallan a la vez
+let isRedirecting = false
 
 // ---------------------------------------------------------------------------
 // Interceptor de REQUEST — adjunta el Bearer token
@@ -35,17 +39,27 @@ api.interceptors.request.use(async (config) => {
   }
 
   try {
-    // Intento silencioso — usa el refresh_token si el access_token expiró
-    const tokenResponse = await msalInstance.acquireTokenSilent({
-      ...loginRequest,
-      account: accounts[0],
-    })
+    // Timeout de 8 segundos para evitar que acquireTokenSilent cuelgue la UI
+    const tokenResponse = await Promise.race([
+      msalInstance.acquireTokenSilent({
+        ...loginRequest,
+        account: accounts[0],
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('MSAL timeout')), 8000)
+      ),
+    ])
     config.headers.Authorization = `Bearer ${tokenResponse.accessToken}`
   } catch (error) {
-    // El silencioso falló (sesión expirada, consent requerido, etc.)
-    // Iniciar flujo interactivo por redirect
-    console.warn('[API] Silent token acquisition failed, redirecting to login:', error)
-    await msalInstance.acquireTokenRedirect(loginRequest)
+    if (error instanceof InteractionRequiredAuthError && !isRedirecting) {
+      // Consent requerido — redirigir una sola vez
+      console.warn('[API] Consent required, redirecting to B2C login')
+      isRedirecting = true
+      msalInstance.acquireTokenRedirect(loginRequest)
+    } else {
+      // Error de red, timeout u otro — continuar sin token (API retornará 401)
+      console.warn('[API] Token acquisition failed, continuing without token:', error.message)
+    }
   }
 
   return config
@@ -57,10 +71,10 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
-      // Token inválido o expirado → forzar re-login
+    if (error.response?.status === 401 && !isRedirecting) {
       console.error('[API] 401 Unauthorized — redirecting to login')
-      await msalInstance.acquireTokenRedirect(loginRequest)
+      isRedirecting = true
+      msalInstance.acquireTokenRedirect(loginRequest)
     }
     // Para otros errores (404, 422, 500), dejar que el caller los maneje
     return Promise.reject(error)

@@ -84,13 +84,8 @@ export const loginRequest = {
 
 // ---------------------------------------------------------------------------
 // Instancia de MSAL — singleton compartido por toda la app
+// MsalProvider (en main.jsx) llama initialize() y handleRedirectPromise()
+// internamente. No los llamamos aquí para evitar la carrera de concurrencia
+// que deja inProgress atascado en 'handleRedirect'.
 // ---------------------------------------------------------------------------
 export const msalInstance = new PublicClientApplication(msalConfig)
-
-// Manejar la respuesta del redirect de B2C al cargar la página
-// Esto es necesario para completar el flujo de login/logout por redirect
-msalInstance.initialize().then(() => {
-  msalInstance.handleRedirectPromise().catch((error) => {
-    console.error('[MSAL] Error handling redirect promise:', error)
-  })
-})
