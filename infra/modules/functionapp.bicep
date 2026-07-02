@@ -92,7 +92,8 @@ resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
       cors: {
         allowedOrigins: [
           'https://portal.azure.com'
-          // TODO: Agregar el dominio del Static Web App post-deploy
+          'https://gentle-dune-0463b9c0f.7.azurestaticapps.net'
+          'http://localhost:5173'
         ]
         supportCredentials: false
       }
