@@ -15,6 +15,9 @@ Uso en endpoints:
         ...
 """
 
+import uuid
+from datetime import datetime
+
 from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
@@ -26,6 +29,7 @@ from services.auth_service import (
     extract_user_id,
     validate_token,
 )
+from services import cosmos_service
 
 # HTTPBearer extrae automáticamente el token del header "Authorization: Bearer <token>"
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -98,15 +102,58 @@ async def get_current_user(
         claims = await validate_token(credentials.credentials)
         user_id = extract_user_id(claims)
         email = extract_email(claims)
-        roles = extract_roles(claims)
 
         if not user_id:
             raise credentials_exception
+
+        roles = await _provision_user(user_id, email, claims)
 
         return CurrentUser(user_id=user_id, email=email, roles=roles, claims=claims)
 
     except JWTError:
         raise credentials_exception
+
+
+async def _provision_user(user_id: str, email: str, claims: dict) -> list[str]:
+    """
+    Upsert del usuario en Cosmos DB en cada login.
+    Si es nuevo: crea con role=collector.
+    Si ya existe: preserva el rol asignado por el admin.
+    Retorna la lista de roles del usuario según Cosmos DB.
+    """
+    try:
+        existing = await cosmos_service.query_items(
+            cosmos_service.CONTAINER_USERS,
+            "SELECT * FROM c WHERE c.b2c_object_id = @oid",
+            parameters=[{"name": "@oid", "value": user_id}],
+            partition_key=user_id,
+        )
+
+        if existing:
+            user_doc = existing[0]
+            user_doc["email"] = email
+            user_doc["updated_at"] = datetime.utcnow().isoformat()
+            await cosmos_service.upsert_item(cosmos_service.CONTAINER_USERS, user_doc)
+            return [user_doc.get("role", "collector")]
+        else:
+            display_name = claims.get("name") or claims.get("given_name") or email.split("@")[0]
+            new_user = {
+                "id": str(uuid.uuid4()),
+                "b2c_object_id": user_id,
+                "email": email,
+                "display_name": display_name,
+                "role": "collector",
+                "is_active": True,
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat(),
+            }
+            await cosmos_service.upsert_item(cosmos_service.CONTAINER_USERS, new_user)
+            return ["collector"]
+
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning("User provision failed for %s: %s", user_id, exc)
+        return extract_roles(claims)
 
 
 async def require_admin(

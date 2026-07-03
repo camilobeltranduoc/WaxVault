@@ -46,8 +46,11 @@ export default function CollectionPage() {
   return (
     <CollectionProvider>
       <div>
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-vinyl-black">Mi Colección</h1>
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <p className="label-mono text-gray-400 mb-1">Módulo B</p>
+            <h1 className="font-display text-5xl text-vinyl-black tracking-wide">MI COLECCIÓN</h1>
+          </div>
           <Link to="/collection/add" className="btn-primary">
             + Agregar Vinilo
           </Link>

@@ -12,31 +12,32 @@
 import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '@hooks/useAuth'
 import { ROLES } from '@constants/roles'
+import { WaxVaultLogo } from '@components/common/Logo'
 
 export default function Navbar() {
   const { isAuthenticated, currentUser, userRole, login, logout } = useAuth()
 
   return (
-    <nav className="bg-vinyl-black text-vinyl-cream shadow-vinyl">
+    <nav className="sticky top-0 z-50 bg-vinyl-black text-vinyl-cream shadow-vinyl border-b border-vinyl-groove/40">
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="flex items-center justify-between h-16">
 
           {/* Logo */}
-          <Link
-            to="/"
-            className="flex items-center gap-2 font-bold text-xl text-vinyl-label hover:opacity-90 transition-opacity"
-          >
-            🎵 WaxVault
+          <Link to="/" className="hover:opacity-90 transition-opacity">
+            <WaxVaultLogo />
           </Link>
 
           {/* Links principales */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-7">
             <NavLink
               to="/catalog"
               className={({ isActive }) =>
-                `text-sm font-medium transition-colors hover:text-vinyl-label ${
-                  isActive ? 'text-vinyl-label' : 'text-vinyl-cream'
+                `label-mono transition-all hover:text-vinyl-label pb-0.5 ${
+                  isActive ? 'text-vinyl-label' : 'text-vinyl-cream/70'
                 }`
+              }
+              style={({ isActive }) =>
+                isActive ? { boxShadow: '0 -2px 0 0 #c9a84c inset' } : {}
               }
             >
               Catálogo
@@ -47,9 +48,12 @@ export default function Navbar() {
                 <NavLink
                   to="/collection"
                   className={({ isActive }) =>
-                    `text-sm font-medium transition-colors hover:text-vinyl-label ${
-                      isActive ? 'text-vinyl-label' : 'text-vinyl-cream'
+                    `label-mono transition-all hover:text-vinyl-label pb-0.5 ${
+                      isActive ? 'text-vinyl-label' : 'text-vinyl-cream/70'
                     }`
+                  }
+                  style={({ isActive }) =>
+                    isActive ? { boxShadow: '0 -2px 0 0 #c9a84c inset' } : {}
                   }
                 >
                   Mi Colección
@@ -57,9 +61,12 @@ export default function Navbar() {
                 <NavLink
                   to="/dashboard"
                   className={({ isActive }) =>
-                    `text-sm font-medium transition-colors hover:text-vinyl-label ${
-                      isActive ? 'text-vinyl-label' : 'text-vinyl-cream'
+                    `label-mono transition-all hover:text-vinyl-label pb-0.5 ${
+                      isActive ? 'text-vinyl-label' : 'text-vinyl-cream/70'
                     }`
+                  }
+                  style={({ isActive }) =>
+                    isActive ? { boxShadow: '0 -2px 0 0 #c9a84c inset' } : {}
                   }
                 >
                   Dashboard
@@ -71,9 +78,12 @@ export default function Navbar() {
               <NavLink
                 to="/admin"
                 className={({ isActive }) =>
-                  `text-sm font-medium transition-colors hover:text-vinyl-red ${
-                    isActive ? 'text-vinyl-red' : 'text-vinyl-cream'
+                  `label-mono transition-all hover:text-vinyl-red pb-0.5 ${
+                    isActive ? 'text-vinyl-red' : 'text-vinyl-cream/70'
                   }`
+                }
+                style={({ isActive }) =>
+                  isActive ? { boxShadow: '0 -2px 0 0 #c0392b inset' } : {}
                 }
               >
                 ⚙ Backoffice
@@ -85,20 +95,20 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
               <>
-                <span className="text-sm text-gray-400 hidden sm:block">
+                <span className="label-mono text-gray-500 hidden sm:block truncate max-w-[160px]">
                   {currentUser?.name || currentUser?.email}
                 </span>
                 <button
                   onClick={logout}
-                  className="text-sm font-medium text-vinyl-cream hover:text-vinyl-label transition-colors"
+                  className="label-mono text-vinyl-cream/70 hover:text-vinyl-label transition-colors"
                 >
-                  Cerrar sesión
+                  Salir
                 </button>
               </>
             ) : (
               <button
                 onClick={login}
-                className="btn-primary text-sm"
+                className="btn-primary"
               >
                 Iniciar sesión
               </button>

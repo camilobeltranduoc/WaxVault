@@ -46,7 +46,7 @@ import ApprovalsPage from '@pages/admin/ApprovalsPage'
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-vinyl-cream">
+      <div className="min-h-screen bg-vinyl-cream overflow-x-hidden">
         <Navbar />
 
         <main className="container mx-auto px-4 py-8 max-w-7xl">

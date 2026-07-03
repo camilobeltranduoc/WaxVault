@@ -1,13 +1,7 @@
-/**
- * Gráfico de historial de tasación patrimonial.
- * Usa recharts LineChart para mostrar la evolución del valor total
- * de la colección a lo largo del tiempo.
- */
-
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -15,13 +9,12 @@ import {
 } from 'recharts'
 import { formatCurrency } from '@utils/formatters'
 
-/** Tooltip personalizado con estilo WaxVault */
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
     <div className="card !p-3 shadow-xl border border-vinyl-label/30">
       <p className="text-xs text-gray-500 mb-1">{label}</p>
-      <p className="font-bold text-vinyl-label">
+      <p className="font-bold text-vinyl-label text-base">
         {formatCurrency(payload[0]?.value)}
       </p>
     </div>
@@ -36,14 +29,21 @@ export default function ValuationChart({ data = [] }) {
       </h2>
 
       {data.length === 0 ? (
-        <div className="h-[300px] flex items-center justify-center">
-          <p className="text-gray-400 text-sm">
+        <div className="h-[300px] flex flex-col items-center justify-center gap-3">
+          <p className="text-4xl">📀</p>
+          <p className="text-gray-400 text-sm text-center">
             Agrega vinilos a tu colección para ver el historial de tasación.
           </p>
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+          <AreaChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+            <defs>
+              <linearGradient id="vinylGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#c9a84c" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#c9a84c" stopOpacity={0} />
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis
               dataKey="month"
@@ -57,15 +57,16 @@ export default function ValuationChart({ data = [] }) {
               axisLine={false}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Line
+            <Area
               type="monotone"
               dataKey="value"
               stroke="#c9a84c"
-              strokeWidth={2.5}
-              dot={{ fill: '#c9a84c', r: 4 }}
-              activeDot={{ r: 6, fill: '#c9a84c' }}
+              strokeWidth={3}
+              fill="url(#vinylGradient)"
+              dot={{ fill: '#c9a84c', r: 5, strokeWidth: 2, stroke: '#fff' }}
+              activeDot={{ r: 7, fill: '#c9a84c', stroke: '#fff', strokeWidth: 2 }}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       )}
     </div>

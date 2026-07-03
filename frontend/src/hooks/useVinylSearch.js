@@ -14,6 +14,17 @@ import { useQuery } from '@tanstack/react-query'
 import { QUERY_KEYS } from '@constants/queryKeys'
 import api from '@services/api'
 
+export function useVinylFeatured() {
+  return useQuery({
+    queryKey: [QUERY_KEYS.CATALOG_SEARCH, '__featured__'],
+    queryFn: async () => {
+      const response = await api.get('/catalog/featured')
+      return response.data
+    },
+    staleTime: 1000 * 60 * 60, // 1 hora — rota con el backend
+  })
+}
+
 export function useVinylSearch(searchTerm = '', page = 1, perPage = 20) {
   return useQuery({
     queryKey: [QUERY_KEYS.CATALOG_SEARCH, searchTerm, page, perPage],

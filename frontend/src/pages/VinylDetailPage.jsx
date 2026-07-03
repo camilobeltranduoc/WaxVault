@@ -50,21 +50,21 @@ export default function VinylDetailPage() {
 
         <div className="space-y-3">
           <div>
-            <h1 className="text-3xl font-bold text-vinyl-black">{master.title}</h1>
-            <p className="text-xl text-gray-600 mt-1">{master.artist}</p>
+            <h1 className="font-display text-4xl text-vinyl-black tracking-wide">{master.title.toUpperCase()}</h1>
+            <p className="label-mono text-gray-500 mt-2">{master.artist}</p>
           </div>
 
           <div className="flex flex-wrap gap-4 text-sm">
             {master.year && (
               <div>
-                <span className="text-gray-400 block">Año original</span>
-                <span className="font-medium">{formatYear(master.year)}</span>
+                <span className="label-mono text-gray-400 block mb-0.5">Año original</span>
+                <span className="font-semibold">{formatYear(master.year)}</span>
               </div>
             )}
             {master.total_versions != null && (
               <div>
-                <span className="text-gray-400 block">Prensados en vinilo</span>
-                <span className="font-medium">{master.versions?.length ?? master.total_versions}</span>
+                <span className="label-mono text-gray-400 block mb-0.5">Prensados en vinilo</span>
+                <span className="font-semibold">{master.versions?.length ?? master.total_versions}</span>
               </div>
             )}
           </div>
@@ -74,7 +74,7 @@ export default function VinylDetailPage() {
               {master.genre.map((g) => (
                 <span
                   key={g}
-                  className="px-3 py-1 bg-vinyl-cream border border-vinyl-groove rounded-full text-xs font-medium"
+                  className="label-mono px-3 py-1 bg-vinyl-cream border border-vinyl-groove/50 rounded-full"
                 >
                   {g}
                 </span>
@@ -92,14 +92,14 @@ export default function VinylDetailPage() {
 
       {/* Lista de versiones/prensados */}
       <div>
-        <h2 className="text-lg font-bold text-vinyl-black mb-4">
-          Prensados disponibles
+        <div className="flex items-baseline gap-3 mb-4">
+          <h2 className="font-display text-3xl text-vinyl-black tracking-wide">PRENSADOS DISPONIBLES</h2>
           {master.versions?.length > 0 && (
-            <span className="text-sm font-normal text-gray-400 ml-2">
-              ({master.versions.length} en vinilo)
+            <span className="label-mono text-gray-400">
+              {master.versions.length} en vinilo
             </span>
           )}
-        </h2>
+        </div>
 
         {!master.versions?.length && (
           <div className="card text-center py-8 text-gray-400">
@@ -108,17 +108,17 @@ export default function VinylDetailPage() {
         )}
 
         {master.versions?.length > 0 && (
-          <div className="overflow-x-auto rounded-xl shadow-vinyl">
+          <div className="overflow-x-auto rounded-2xl shadow-vinyl">
             <table className="w-full bg-white text-sm">
               <thead className="bg-vinyl-black text-vinyl-cream">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold">Año</th>
-                  <th className="px-4 py-3 text-left font-semibold">País</th>
-                  <th className="px-4 py-3 text-left font-semibold">Sello</th>
-                  <th className="px-4 py-3 text-left font-semibold">Formato</th>
-                  <th className="px-4 py-3 text-left font-semibold">Cat#</th>
+                  <th className="px-4 py-3 text-left"><span className="label-mono">Año</span></th>
+                  <th className="px-4 py-3 text-left"><span className="label-mono">País</span></th>
+                  <th className="px-4 py-3 text-left"><span className="label-mono">Sello</span></th>
+                  <th className="px-4 py-3 text-left"><span className="label-mono">Formato</span></th>
+                  <th className="px-4 py-3 text-left"><span className="label-mono">Cat#</span></th>
                   {isLoggedIn && (
-                    <th className="px-4 py-3 text-center font-semibold">Acción</th>
+                    <th className="px-4 py-3 text-center"><span className="label-mono">Acción</span></th>
                   )}
                 </tr>
               </thead>

@@ -11,6 +11,7 @@ Endpoints públicos (sin autenticación):
 
 import logging
 import re
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -20,6 +21,13 @@ from services import discogs_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+FEATURED_TERMS = [
+    "jazz", "rock", "blues", "soul", "electronic", "reggae",
+    "hip-hop", "classical", "punk", "folk", "metal", "latin",
+    "funk", "bossa nova", "psychedelic", "ambient", "country",
+    "disco", "R&B", "new wave",
+]
 
 
 def _parse_discogs_title(raw: str) -> tuple[str, str]:
@@ -33,6 +41,48 @@ def _parse_discogs_title(raw: str) -> tuple[str, str]:
 def _clean_artist_name(name: str) -> str:
     """Elimina el sufijo de desambiguación de Discogs: 'Nirvana (2)' → 'Nirvana'."""
     return re.sub(r'\s*\(\d+\)$', '', name).strip()
+
+
+@router.get(
+    "/featured",
+    summary="Vinilos destacados del momento",
+    description="Retorna master releases de Discogs rotando por género según la hora del día.",
+)
+async def get_featured(per_page: int = Query(default=20, ge=1, le=50)):
+    now = datetime.utcnow()
+    seed = now.timetuple().tm_yday * 24 + now.hour
+    term = FEATURED_TERMS[seed % len(FEATURED_TERMS)]
+
+    try:
+        results = await discogs_service.search_masters(query=term, page=1, per_page=per_page)
+    except Exception as exc:
+        logger.error("Discogs featured error: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Servicio de Discogs no disponible.",
+        )
+
+    items = []
+    for r in results.get("results", []):
+        artist, title = _parse_discogs_title(r.get("title", ""))
+        year_str = r.get("year", "")
+        vinyl = VinylPublic(
+            id=str(r["id"]),
+            discogs_id=r["id"],
+            title=title,
+            artist=artist,
+            year=int(year_str) if year_str and str(year_str).isdigit() else None,
+            genre=r.get("genre", []),
+            style=r.get("style", []),
+            cover_image_url=r.get("cover_image") or r.get("thumb"),
+        )
+        items.append(vinyl)
+
+    return {
+        "items": [item.model_dump() for item in items],
+        "genre": term,
+        "total": len(items),
+    }
 
 
 @router.get("", include_in_schema=False)

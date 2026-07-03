@@ -21,6 +21,7 @@ Endpoints:
     POST   /api/admin/approvals/{id}/reject   → Rechazar vinilo (PENDING → REJECTED)
 """
 
+import asyncio
 import logging
 import uuid
 from datetime import datetime
@@ -82,16 +83,32 @@ async def _change_vinyl_status(vinyl: dict, new_status: VinylStatus) -> dict:
     description="Retorna todos los usuarios registrados en la plataforma.",
 )
 async def list_users(admin: CurrentUser = Depends(require_admin)):
-    users = await cosmos_service.query_items(
-        cosmos_service.CONTAINER_USERS,
-        "SELECT * FROM c ORDER BY c.created_at DESC",
+    users, collection_items = await asyncio.gather(
+        cosmos_service.query_items(
+            cosmos_service.CONTAINER_USERS,
+            "SELECT * FROM c ORDER BY c.created_at DESC",
+        ),
+        cosmos_service.query_items(
+            cosmos_service.CONTAINER_COLLECTION,
+            "SELECT c.user_id FROM c",
+        ),
     )
+
+    counts_by_user: dict[str, int] = {}
+    for item in collection_items:
+        uid = item.get("user_id", "")
+        if uid:
+            counts_by_user[uid] = counts_by_user.get(uid, 0) + 1
+
     public = []
     for u in users:
         try:
-            public.append(UserPublic(**u).model_dump())
+            user_dict = UserPublic(**u).model_dump()
         except Exception:
-            public.append(u)
+            user_dict = u
+        user_dict["vinyl_count"] = counts_by_user.get(u.get("b2c_object_id", u.get("id", "")), 0)
+        public.append(user_dict)
+
     return {"users": public, "total": len(public)}
 
 
