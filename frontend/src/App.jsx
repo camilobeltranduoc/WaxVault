@@ -42,6 +42,7 @@ import AdminDashboardPage from '@pages/admin/AdminDashboardPage'
 import UsersPage from '@pages/admin/UsersPage'
 import CatalogManagePage from '@pages/admin/CatalogManagePage'
 import ApprovalsPage from '@pages/admin/ApprovalsPage'
+import AdminCollectionsPage from '@pages/admin/AdminCollectionsPage'
 
 export default function App() {
   return (
@@ -77,6 +78,7 @@ export default function App() {
               <Route path="/admin/users" element={<UsersPage />} />
               <Route path="/admin/catalog" element={<CatalogManagePage />} />
               <Route path="/admin/approvals" element={<ApprovalsPage />} />
+              <Route path="/admin/collections" element={<AdminCollectionsPage />} />
             </Route>
 
             {/* Fallback — cualquier ruta no definida vuelve al inicio */}

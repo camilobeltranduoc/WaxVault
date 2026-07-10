@@ -28,6 +28,15 @@ const ADMIN_MENU = [
     iconBg: 'bg-vinyl-black/8',
     delay: 200,
   },
+  {
+    path: '/admin/collections',
+    icon: '🗂️',
+    label: 'Colecciones',
+    desc: 'Ver y editar los vinilos de todos los usuarios',
+    tile: 'tile-groove',
+    iconBg: 'bg-vinyl-cream/15',
+    delay: 300,
+  },
 ]
 
 export default function AdminDashboardPage() {

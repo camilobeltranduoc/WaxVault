@@ -111,60 +111,78 @@ async def list_collection(current_user: CurrentUser = Depends(get_current_user))
     "/",
     status_code=status.HTTP_201_CREATED,
     summary="Agregar a mi colección",
-    description="Busca el release en Discogs, embebe su metadata y guarda en la colección personal.",
+    description="Si lleva discogs_id busca en Discogs; sin él acepta title+artist como entrada manual.",
 )
 async def add_to_collection(
     body: CollectionEntryCreate,
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    release = await discogs_service.get_release(body.discogs_id)
-    if not release:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Vinilo con Discogs ID {body.discogs_id} no encontrado.",
-        )
+    if body.discogs_id:
+        # --- Flujo Discogs ---
+        release = await discogs_service.get_release(body.discogs_id)
+        if not release:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Vinilo con Discogs ID {body.discogs_id} no encontrado.",
+            )
 
-    artists = release.get("artists", [])
-    artist = _clean_artist_name(artists[0]["name"]) if artists else "Desconocido"
+        artists = release.get("artists", [])
+        artist = _clean_artist_name(artists[0]["name"]) if artists else "Desconocido"
+        images = release.get("images", [])
+        cover_url = images[0].get("uri") if images else None
+        labels = release.get("labels", [])
+        label = labels[0]["name"] if labels else None
 
-    images = release.get("images", [])
-    cover_url = images[0].get("uri") if images else None
-
-    labels = release.get("labels", [])
-    label = labels[0]["name"] if labels else None
-
-    # Intentamos precio mediano (más representativo que el mínimo)
-    market_price: float | None = None
-    try:
-        listings_data = await discogs_service.get_marketplace_listings(body.discogs_id)
-        market_price = discogs_service.calculate_median_price(listings_data)
-    except Exception as exc:
-        logger.warning("Marketplace listings no disponible para %s: %s", body.discogs_id, exc)
-
-    # Fallback a lowest_price si no hay listings suficientes
-    if market_price is None:
+        market_price: float | None = None
         try:
-            stats = await discogs_service.get_marketplace_stats(body.discogs_id)
-            if stats:
-                market_price = discogs_service.extract_market_price(stats)
+            listings_data = await discogs_service.get_marketplace_listings(body.discogs_id)
+            market_price = discogs_service.calculate_median_price(listings_data)
         except Exception as exc:
-            logger.warning("No se pudo obtener precio Discogs para %s: %s", body.discogs_id, exc)
+            logger.warning("Marketplace listings no disponible para %s: %s", body.discogs_id, exc)
 
-    new_entry = CollectionEntry(
-        id=str(uuid.uuid4()),
-        user_id=current_user.user_id,
-        discogs_id=body.discogs_id,
-        title=release.get("title", ""),
-        artist=artist,
-        label=label,
-        year=release.get("year"),
-        cover_image_url=cover_url,
-        discogs_market_price=market_price,
-        condition=body.condition,
-        purchase_price=body.purchase_price,
-        purchase_date=body.purchase_date,
-        notes=body.notes,
-    )
+        if market_price is None:
+            try:
+                stats = await discogs_service.get_marketplace_stats(body.discogs_id)
+                if stats:
+                    market_price = discogs_service.extract_market_price(stats)
+            except Exception as exc:
+                logger.warning("No se pudo obtener precio Discogs para %s: %s", body.discogs_id, exc)
+
+        new_entry = CollectionEntry(
+            id=str(uuid.uuid4()),
+            user_id=current_user.user_id,
+            discogs_id=body.discogs_id,
+            title=release.get("title", ""),
+            artist=artist,
+            label=label,
+            year=release.get("year"),
+            cover_image_url=cover_url,
+            discogs_market_price=market_price,
+            condition=body.condition,
+            purchase_price=body.purchase_price,
+            purchase_date=body.purchase_date,
+            notes=body.notes,
+        )
+    else:
+        # --- Flujo manual (sin Discogs) ---
+        if not body.title or not body.artist:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Para entradas manuales se requieren título y artista.",
+            )
+        new_entry = CollectionEntry(
+            id=str(uuid.uuid4()),
+            user_id=current_user.user_id,
+            discogs_id=None,
+            title=body.title.strip(),
+            artist=body.artist.strip(),
+            label=body.label,
+            year=body.year,
+            condition=body.condition,
+            purchase_price=body.purchase_price,
+            purchase_date=body.purchase_date,
+            notes=body.notes,
+        )
 
     saved = await cosmos_service.upsert_item(
         cosmos_service.CONTAINER_COLLECTION,

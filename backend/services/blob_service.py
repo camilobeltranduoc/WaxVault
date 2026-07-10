@@ -18,6 +18,7 @@ import logging
 import uuid
 from typing import BinaryIO, Optional
 
+from azure.storage.blob import ContentSettings
 from azure.storage.blob.aio import BlobServiceClient
 
 from config.settings import get_settings
@@ -72,7 +73,7 @@ async def upload_cover_image(
     await blob_client.upload_blob(
         file_data,
         blob_type="BlockBlob",
-        content_settings={"content_type": content_type},
+        content_settings=ContentSettings(content_type=content_type),
         overwrite=True,
     )
 
@@ -101,7 +102,7 @@ async def upload_user_cover(
     await blob_client.upload_blob(
         file_data,
         blob_type="BlockBlob",
-        content_settings={"content_type": content_type},
+        content_settings=ContentSettings(content_type=content_type),
         overwrite=True,
     )
 

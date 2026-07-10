@@ -30,6 +30,7 @@ from typing import Optional
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 
 from middleware.auth_middleware import CurrentUser, require_admin
+from models.collection import CollectionEntryUpdate
 from models.user import UserPublic, UserUpdate
 from models.vinyl import Vinyl, VinylCreate, VinylPublic, VinylStatus, VinylUpdate
 from services import cosmos_service
@@ -324,6 +325,93 @@ async def approve_vinyl(vinyl_id: str, admin: CurrentUser = Depends(require_admi
 
     saved = await _change_vinyl_status(vinyl[0], VinylStatus.APPROVED)
     return {"vinyl_id": vinyl_id, "status": "approved", "approved_by": admin.user_id, "vinyl": saved}
+
+
+# ---------------------------------------------------------------------------
+# Gestión de Colecciones de Usuarios
+# ---------------------------------------------------------------------------
+
+@router.get(
+    "/collections",
+    summary="Listar todas las colecciones",
+    description="Retorna todas las entradas de colección de todos los usuarios con info del propietario.",
+)
+async def list_all_collections(admin: CurrentUser = Depends(require_admin)):
+    entries, users = await asyncio.gather(
+        cosmos_service.query_items(
+            cosmos_service.CONTAINER_COLLECTION,
+            "SELECT * FROM c ORDER BY c.created_at DESC",
+        ),
+        cosmos_service.query_items(
+            cosmos_service.CONTAINER_USERS,
+            "SELECT c.b2c_object_id, c.email, c.display_name FROM c",
+        ),
+    )
+    user_map = {u.get("b2c_object_id"): u for u in users}
+    result = []
+    for entry in entries:
+        user = user_map.get(entry.get("user_id"), {})
+        result.append({
+            **entry,
+            "user_email": user.get("email"),
+            "user_name": user.get("display_name"),
+        })
+    return {"entries": result, "total": len(result)}
+
+
+@router.put(
+    "/collections/{entry_id}",
+    summary="Actualizar entrada de colección (admin)",
+    description="Edita cualquier entrada de colección sin restricción de propietario.",
+)
+async def admin_update_collection_entry(
+    entry_id: str,
+    update: CollectionEntryUpdate,
+    admin: CurrentUser = Depends(require_admin),
+):
+    results = await cosmos_service.query_items(
+        cosmos_service.CONTAINER_COLLECTION,
+        "SELECT * FROM c WHERE c.id = @id",
+        parameters=[{"name": "@id", "value": entry_id}],
+    )
+    if not results:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Entrada no encontrada.",
+        )
+    existing = results[0]
+    patch = update.model_dump(exclude_none=True)
+    patch["updated_at"] = datetime.utcnow().isoformat()
+    existing.update(patch)
+    return await cosmos_service.upsert_item(cosmos_service.CONTAINER_COLLECTION, existing)
+
+
+@router.delete(
+    "/collections/{entry_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Eliminar entrada de colección (admin)",
+)
+async def admin_delete_collection_entry(
+    entry_id: str,
+    admin: CurrentUser = Depends(require_admin),
+):
+    results = await cosmos_service.query_items(
+        cosmos_service.CONTAINER_COLLECTION,
+        "SELECT * FROM c WHERE c.id = @id",
+        parameters=[{"name": "@id", "value": entry_id}],
+    )
+    if not results:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Entrada no encontrada.",
+        )
+    entry = results[0]
+    await cosmos_service.delete_item(
+        cosmos_service.CONTAINER_COLLECTION,
+        entry_id,
+        partition_key=entry["user_id"],
+    )
+    return None
 
 
 @router.post(

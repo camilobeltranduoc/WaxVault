@@ -27,4 +27,5 @@ export const QUERY_KEYS = Object.freeze({
   ADMIN_USER_DETAIL: 'adminUserDetail',
   ADMIN_CATALOG: 'adminCatalog',
   ADMIN_APPROVALS: 'adminApprovals',
+  ADMIN_COLLECTIONS: 'adminCollections',
 })

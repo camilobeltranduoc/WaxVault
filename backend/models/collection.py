@@ -26,9 +26,9 @@ class CollectionEntry(BaseModel):
         ...,
         description="Partition key — b2c_object_id del propietario de la colección."
     )
-    discogs_id: int = Field(
-        ...,
-        description="ID del release en Discogs. Identificador universal del vinilo."
+    discogs_id: Optional[int] = Field(
+        default=None,
+        description="ID del release en Discogs. None para entradas manuales sin Discogs."
     )
     title: str = Field(..., description="Título del disco (embebido desde Discogs al agregar).")
     artist: str = Field(..., description="Artista (embebido desde Discogs al agregar).")
@@ -77,8 +77,13 @@ class CollectionEntry(BaseModel):
 
 
 class CollectionEntryCreate(BaseModel):
-    """Payload para agregar un vinilo de Discogs a la colección (POST /api/collection)."""
-    discogs_id: int = Field(..., description="ID del release en Discogs.")
+    """Payload para agregar un vinilo a la colección (POST /api/collection).
+    Si discogs_id está presente se busca en Discogs; si no, title y artist son obligatorios."""
+    discogs_id: Optional[int] = Field(default=None, description="ID del release en Discogs.")
+    title: Optional[str] = Field(default=None, max_length=500, description="Requerido para entradas manuales.")
+    artist: Optional[str] = Field(default=None, max_length=500, description="Requerido para entradas manuales.")
+    year: Optional[int] = Field(default=None)
+    label: Optional[str] = Field(default=None, max_length=200)
     condition: VinylCondition = VinylCondition.VERY_GOOD
     purchase_price: Optional[float] = Field(default=None, ge=0)
     purchase_date: Optional[datetime] = None
