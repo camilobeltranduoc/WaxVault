@@ -2,12 +2,12 @@ name: Backend CI/CD — Azure Functions (Python)
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-ci.yml'
   pull_request:
-    branches: [main]
+    branches: [master]
     paths:
       - 'backend/**'
 
@@ -78,7 +78,7 @@ jobs:
       # Requiere el secret AZURE_FUNCTIONAPP_PUBLISH_PROFILE en el repo
       # -----------------------------------------------------------------------
       - name: Deploy a Azure Functions
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: Azure/functions-action@v1
         with:
           app-name: ${{ secrets.AZURE_FUNCTION_APP_NAME }}
@@ -92,7 +92,7 @@ jobs:
       # Smoke test post-deploy (verificar que el health check responde)
       # -----------------------------------------------------------------------
       - name: Smoke test — Health Check
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
           FUNCTION_URL="https://${{ secrets.AZURE_FUNCTION_APP_NAME }}.azurewebsites.net/api/health"
           echo "Verificando: $FUNCTION_URL"
