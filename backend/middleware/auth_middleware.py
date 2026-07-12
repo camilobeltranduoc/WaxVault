@@ -15,7 +15,6 @@ Uso en endpoints:
         ...
 """
 
-import uuid
 from datetime import datetime
 
 from fastapi import Depends, Header, HTTPException, status
@@ -138,7 +137,10 @@ async def _provision_user(user_id: str, email: str, claims: dict) -> list[str]:
         else:
             display_name = claims.get("name") or claims.get("given_name") or email.split("@")[0]
             new_user = {
-                "id": str(uuid.uuid4()),
+                # id determinístico = b2c_object_id: si dos requests concurrentes
+                # provisionan al mismo usuario, ambas upsertean el MISMO documento
+                # en vez de crear duplicados (race condition del primer login).
+                "id": user_id,
                 "b2c_object_id": user_id,
                 "email": email,
                 "display_name": display_name,
