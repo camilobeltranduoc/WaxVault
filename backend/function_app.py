@@ -14,7 +14,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config.settings import get_settings
-from routers import health, catalog, collection, admin
+from routers import health, catalog, collection, admin, me
 
 # ---------------------------------------------------------------------------
 # FastAPI app
@@ -65,6 +65,11 @@ fastapi_app.include_router(
     admin.router,
     prefix="/api/admin",
     tags=["admin"],
+)
+fastapi_app.include_router(
+    me.router,
+    prefix="/api/me",
+    tags=["me"],
 )
 
 # ---------------------------------------------------------------------------

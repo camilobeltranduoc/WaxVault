@@ -59,6 +59,7 @@ class UserUpdate(BaseModel):
 class UserPublic(BaseModel):
     """Vista pública/admin de un usuario (sin campos sensibles de B2C)."""
     id: str
+    b2c_object_id: Optional[str] = None
     email: str
     display_name: Optional[str] = None
     role: UserRole
