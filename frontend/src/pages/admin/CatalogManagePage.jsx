@@ -1,5 +1,7 @@
 /**
- * CRUD del catálogo maestro — Módulo C.
+ * CRUD del catálogo local — Módulo C.
+ * Vinilos almacenados en Cosmos DB: creados por el admin o enviados
+ * por usuarios (flujo de aprobación). No incluye resultados de Discogs.
  */
 
 import { useState } from 'react'
@@ -126,12 +128,18 @@ export default function CatalogManagePage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-3xl font-bold text-vinyl-black">Catálogo Maestro</h1>
+      <div className="flex items-end justify-between mb-6">
+        <div>
+          <p className="label-mono text-gray-400 mb-1">Módulo C</p>
+          <h1 className="font-display text-5xl text-vinyl-black tracking-wide">CATÁLOGO LOCAL</h1>
+        </div>
         <button onClick={() => setShowCreateModal(true)} className="btn-primary">
           + Nuevo Vinilo
         </button>
       </div>
+      <p className="text-gray-500 text-sm mb-4 -mt-2">
+        Vinilos guardados en la base de datos de WaxVault — creados por administradores o enviados por usuarios.
+      </p>
 
       <div className="flex gap-2 mb-4 flex-wrap">
         {['all', 'approved', 'pending', 'rejected', 'archived'].map((s) => (

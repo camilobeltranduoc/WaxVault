@@ -12,7 +12,7 @@ export function useAdminCatalog() {
   const catalogQuery = useQuery({
     queryKey: [QUERY_KEYS.ADMIN_CATALOG],
     queryFn: async () => {
-      const res = await api.get('/catalog', { params: { per_page: 100 } })
+      const res = await api.get('/admin/catalog')
       return res.data
     },
   })

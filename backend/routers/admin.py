@@ -214,6 +214,19 @@ async def delete_user(user_id: str, admin: CurrentUser = Depends(require_admin))
 # Catálogo Maestro
 # ---------------------------------------------------------------------------
 
+@router.get(
+    "/catalog",
+    summary="Listar catálogo local",
+    description="Retorna todos los vinilos del catálogo local (Cosmos DB) en cualquier estado.",
+)
+async def list_catalog_vinyls(admin: CurrentUser = Depends(require_admin)):
+    vinyls = await cosmos_service.query_items(
+        cosmos_service.CONTAINER_VINYLS,
+        "SELECT * FROM c ORDER BY c.created_at DESC",
+    )
+    return {"items": vinyls, "total": len(vinyls)}
+
+
 @router.post(
     "/catalog",
     status_code=status.HTTP_201_CREATED,

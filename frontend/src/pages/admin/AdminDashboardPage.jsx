@@ -13,8 +13,8 @@ const ADMIN_MENU = [
   {
     path: '/admin/catalog',
     icon: '📀',
-    label: 'Catálogo',
-    desc: 'CRUD del catálogo maestro de vinilos',
+    label: 'Catálogo Local',
+    desc: 'Vinilos guardados en la base de WaxVault',
     tile: 'tile-amber',
     iconBg: 'bg-vinyl-black/15',
     delay: 100,
