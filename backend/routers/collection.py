@@ -107,6 +107,7 @@ async def list_collection(current_user: CurrentUser = Depends(get_current_user))
     }
 
 
+@router.post("", status_code=status.HTTP_201_CREATED, include_in_schema=False)
 @router.post(
     "/",
     status_code=status.HTTP_201_CREATED,
@@ -119,7 +120,14 @@ async def add_to_collection(
 ):
     if body.discogs_id:
         # --- Flujo Discogs ---
-        release = await discogs_service.get_release(body.discogs_id)
+        try:
+            release = await discogs_service.get_release(body.discogs_id)
+        except Exception as exc:
+            logger.error("Discogs get_release error for %s: %s", body.discogs_id, exc)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Servicio de Discogs no disponible. Intenta nuevamente.",
+            )
         if not release:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -288,11 +296,18 @@ async def upload_vinyl_cover(
             detail="No tienes esta entrada en tu colección.",
         )
 
-    cover_url = await blob_service.upload_user_cover(
-        file_data=await file.read(),
-        content_type=file.content_type,
-        user_id=current_user.user_id,
-    )
+    try:
+        cover_url = await blob_service.upload_user_cover(
+            file_data=await file.read(),
+            content_type=file.content_type,
+            user_id=current_user.user_id,
+        )
+    except Exception as exc:
+        logger.error("Blob upload error for user %s: %s", current_user.user_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo subir la imagen. Intenta nuevamente.",
+        )
 
     entry = results[0]
     entry["cover_override_url"] = cover_url

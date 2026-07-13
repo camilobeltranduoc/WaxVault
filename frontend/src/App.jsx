@@ -16,8 +16,9 @@
  * Módulo C — Admin Backoffice (requiere rol 'admin' via AdminRoute):
  *   /admin               → AdminDashboardPage
  *   /admin/users         → UsersPage (CRUD usuarios)
- *   /admin/catalog       → CatalogManagePage (CRUD catálogo maestro)
+ *   /admin/catalog       → CatalogManagePage (CRUD catálogo local)
  *   /admin/approvals     → ApprovalsPage (flujo de aprobación)
+ *   /admin/collections   → AdminCollectionsPage (colecciones de todos los usuarios)
  */
 
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'

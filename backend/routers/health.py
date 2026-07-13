@@ -31,6 +31,7 @@ class ReadinessResponse(BaseModel):
     checks: dict[str, str]
 
 
+@router.get("", include_in_schema=False)
 @router.get(
     "/",
     response_model=HealthResponse,

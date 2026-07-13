@@ -19,6 +19,11 @@ Endpoints:
     GET    /api/admin/approvals          → Bandeja de vinilos PENDING
     POST   /api/admin/approvals/{id}/approve  → Aprobar vinilo (PENDING → APPROVED)
     POST   /api/admin/approvals/{id}/reject   → Rechazar vinilo (PENDING → REJECTED)
+
+  Colecciones de usuarios:
+    GET    /api/admin/collections        → Todas las entradas de colección con info del dueño
+    PUT    /api/admin/collections/{id}   → Editar cualquier entrada (sin restricción de dueño)
+    DELETE /api/admin/collections/{id}   → Eliminar cualquier entrada
 """
 
 import asyncio
@@ -150,7 +155,7 @@ async def update_user(
 ):
     results = await cosmos_service.query_items(
         cosmos_service.CONTAINER_USERS,
-        "SELECT * FROM c WHERE c.b2c_object_id = @uid",
+        "SELECT * FROM c WHERE c.b2c_object_id = @uid OR c.id = @uid",
         parameters=[{"name": "@uid", "value": user_id}],
         partition_key=user_id,
     )
