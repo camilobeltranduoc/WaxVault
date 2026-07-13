@@ -23,6 +23,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from middleware.auth_middleware import CurrentUser, get_current_user
 from models.collection import CollectionEntry, CollectionEntryCreate, CollectionEntryUpdate
+from models.vinyl import Vinyl, VinylStatus
 from services import blob_service, cosmos_service, discogs_service
 
 logger = logging.getLogger(__name__)
@@ -31,6 +32,38 @@ router = APIRouter()
 
 def _clean_artist_name(name: str) -> str:
     return re.sub(r'\s*\(\d+\)$', '', name).strip()
+
+
+async def _submit_to_catalog_approval(entry: CollectionEntry, user: CurrentUser) -> None:
+    """
+    Propone una entrada manual al Catálogo Local como PENDING (flujo de aprobación).
+    Si ya existe un vinilo con el mismo título+artista (en cualquier estado),
+    no crea duplicado.
+    """
+    existing = await cosmos_service.query_items(
+        cosmos_service.CONTAINER_VINYLS,
+        "SELECT c.id FROM c WHERE LOWER(c.title) = @title AND LOWER(c.artist) = @artist",
+        parameters=[
+            {"name": "@title", "value": entry.title.lower()},
+            {"name": "@artist", "value": entry.artist.lower()},
+        ],
+    )
+    if existing:
+        return
+
+    pending = Vinyl(
+        id=str(uuid.uuid4()),
+        title=entry.title,
+        artist=entry.artist,
+        label=entry.label,
+        year=entry.year,
+        status=VinylStatus.PENDING,
+        created_by_user_id=user.user_id,
+    )
+    await cosmos_service.upsert_item(
+        cosmos_service.CONTAINER_VINYLS,
+        pending.model_dump(mode="json"),
+    )
 
 
 @router.get(
@@ -196,6 +229,15 @@ async def add_to_collection(
         cosmos_service.CONTAINER_COLLECTION,
         new_entry.model_dump(mode="json"),
     )
+
+    # Entrada manual: proponerla al Catálogo Local vía flujo de aprobación.
+    # Best-effort — si falla, la colección del usuario ya quedó guardada.
+    if not body.discogs_id:
+        try:
+            await _submit_to_catalog_approval(new_entry, current_user)
+        except Exception as exc:
+            logger.warning("No se pudo enviar a aprobación el vinilo manual %s: %s", new_entry.id, exc)
+
     return saved
 
 

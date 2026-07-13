@@ -351,7 +351,9 @@ export default function AddVinylPage() {
       {mode === 'manual' && (
         <>
           <p className="text-sm text-gray-500 mb-6">
-            Ingresa los datos de tu vinilo manualmente. No requiere que esté en Discogs.
+            Ingresa los datos de tu vinilo manualmente. Se agrega a tu colección al instante
+            y queda <span className="font-medium text-vinyl-black">pendiente de revisión de un administrador</span> para
+            entrar al catálogo de WaxVault.
           </p>
           <ManualForm onSuccess={() => navigate('/collection')} />
         </>
